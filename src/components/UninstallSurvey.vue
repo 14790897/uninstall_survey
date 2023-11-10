@@ -1,45 +1,70 @@
 <template>
-  <div class="container mx-auto p-4">
-    <h1 class="text-xl font-bold mb-4">We're sad to see you go!</h1>
-    <form @submit.prevent="submitSurvey">
-      <div class="mb-4">
-        <label for="reason" class="block text-sm font-medium text-gray-700">Why did you uninstall the extension?</label>
-        <select id="reason" v-model="survey.reason"
-          class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-          <option disabled value="">Please select one</option>
-          <option>It's not what I expected</option>
-          <option>I didn't use it much</option>
-          <option>I had technical issues</option>
-          <option>Other</option>
-        </select>
+  <div class="container mx-auto p-8 bg-white rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold text-indigo-600 mb-6">We're sad to see you go!</h1>
+    <form @submit.prevent="sendFeedback">
+      <div class="mb-6">
+        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Your Email(Optional)</label>
+        <input type="email" id="email" v-model="survey.email"
+          class="mt-1 block w-full pl-3 pr-10 py-3 bg-gray-50 text-base border border-gray-300 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 rounded-md shadow-sm" />
       </div>
-      <div v-if="survey.reason === 'Other'" class="mb-4">
-        <label for="feedback" class="block text-sm font-medium text-gray-700">Please provide more details</label>
+      <div class="mb-6">
+        <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">Why did you uninstall the
+          extension?</label>
+        <div v-for="(option, index) in options" :key="index" class="mb-4 flex items-center ">
+          <input type="radio" :id="`option-${index}`" v-model="survey.reason" :value="option.value"
+            class="mt-1 mx-7 block transition duration-300 ease-in-out cursor-pointer h-6 w-6 border-gray-300 text-indigo-600 focus:border-indigo-500 focus:ring-indigo-500" />
+          <label :for="`option-${index}`" class="block text-sm font-medium text-gray-700 mb-1">{{ option.text }}</label>
+        </div>
+      </div>
+      <div v-if="survey.reason !== ''" class="mb-6">
+        <label for="feedback" class="block text-sm font-medium text-gray-700 mb-2">Please provide more details(Optional)</label>
         <textarea id="feedback" v-model="survey.feedback" rows="4"
-          class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+          class="mt-1 block w-full p-3 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"></textarea>
       </div>
-      <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Submit Feedback</button>
+      <button type="submit"
+        class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-lg transition duration-300 ease-in-out">
+        Submit Feedback
+      </button>
     </form>
   </div>
 </template>
 
+
 <script setup lang="ts">
 import { ref } from 'vue';
+import axios from 'axios';
 
 const survey = ref({
+  email: 'example@gmial.com',
   reason: '',
   feedback: ''
 });
 
-function submitSurvey() {
-  // 在这里处理表单提交，例如发送到服务器
-  console.log(survey.value);
-  // 通常你会在这里发送一个请求到后端API
-  // 但是请确保处理用户的隐私信息
-}
+const options = [
+  { value: "It's not what I expected", text: "It's not what I expected" },
+  { value: "I didn't use it much", text: "I didn't use it much" },
+  {
+    value: "I had technical issues", text: "I had technical issues"
+  },
+  { value: "Other", text: "Other" }
+];
 
+const API_URL = 'https://serverless.liuweiqing.top/api/sendEmail'
+const sendFeedback = async () => {
+  try {
+    const res = await axios.post(API_URL, {
+      email: survey.value.email,
+      feedback: survey.value.reason+survey.value.feedback
+    });
+    if (res.status >= 200 && res.status < 300) {
+      alert('Feedback sent successfully!');
+      survey.value.email = '';
+      survey.value.reason = '';
+      survey.value.feedback = '';
+    }
+  } catch (error) {
+    alert('Failed to send feedback. ' + error);
+    console.error('Failed to send feedback:', error);
+  }
+};
 </script>
-
-<style scoped>
-/* 在这里添加你的TailwindCSS样式，如果需要的话 */
-</style>
